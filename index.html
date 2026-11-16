@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>3D модель</title>
+
+    <style>
+        html, body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #dddddd;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Панель */
+
+        #toolbar {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 10;
+
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            border: 0;
+            padding: 10px 14px;
+
+            background: white;
+            color: #222;
+
+            border-radius: 6px;
+
+            font-size: 14px;
+            cursor: pointer;
+
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            background: #f0f0f0;
+        }
+
+        /* Значение измерения */
+
+        #measurement {
+            position: fixed;
+            z-index: 20;
+
+            display: none;
+
+            padding: 5px 8px;
+
+            background: white;
+            color: #111;
+
+            border-radius: 4px;
+
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            font-weight: bold;
+
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+
+            pointer-events: none;
+
+            transform: translate(-50%, -50%);
+        }
+    </style>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+
+<body>
+
+<div id="toolbar">
+    <button id="measureButton">📏 Измерить</button>
+    <button id="clearButton">Очистить</button>
+</div>
+
+<div id="measurement"></div>
+
+<canvas id="canvas"></canvas>
+
+
+<script type="module">
+
+import * as THREE from "three";
+
+import {
+    OrbitControls
+} from "three/addons/controls/OrbitControls.js";
+
+import {
+    GLTFLoader
+} from "three/addons/loaders/GLTFLoader.js";
+
+
+/* --------------------------------------------------
+   СЦЕНА
+-------------------------------------------------- */
+
+const scene = new THREE.Scene();
+
+scene.background =
+    new THREE.Color(0xdddddd);
+
+
+/* --------------------------------------------------
+   КАМЕРА
+-------------------------------------------------- */
+
+const camera =
+    new THREE.PerspectiveCamera(
+        45,
+        window.innerWidth /
+        window.innerHeight,
+        0.01,
+        10000
+    );
+
+
+/* --------------------------------------------------
+   RENDERER
+-------------------------------------------------- */
+
+const renderer =
+    new THREE.WebGLRenderer({
+        canvas: document.getElementById("canvas"),
+        antialias: true
+    });
+
+renderer.setPixelRatio(
+    Math.min(
+        window.devicePixelRatio,
+        2
+    )
+);
+
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+
+/* --------------------------------------------------
+   СВЕТ
+-------------------------------------------------- */
+
+scene.add(
+    new THREE.HemisphereLight(
+        0xffffff,
+        0x555555,
+        2
+    )
+);
+
+
+/* --------------------------------------------------
+   УПРАВЛЕНИЕ
+-------------------------------------------------- */
+
+const controls =
+    new OrbitControls(
+        camera,
+        renderer.domElement
+    );
+
+controls.enableDamping = true;
+
+
+/* --------------------------------------------------
+   МОДЕЛЬ
+-------------------------------------------------- */
+
+let model = null;
+
+const selectableMeshes = [];
+
+
+/* --------------------------------------------------
+   ЗАГРУЗКА GLB
+-------------------------------------------------- */
+
+const loader =
+    new GLTFLoader();
+
+loader.load(
+
+    "/3d-model/{{ model_name }}.glb",
+
+    function(gltf) {
+
+        model = gltf.scene;
+
+        scene.add(model);
+
+
+        /* Контуры */
+
+        model.traverse(function(object) {
+
+            if (!object.isMesh) {
+                return;
+            }
+
+
+            selectableMeshes.push(object);
+
+
+            const edges =
+                new THREE.EdgesGeometry(
+                    object.geometry,
+                    30
+                );
+
+
+            const line =
+                new THREE.LineSegments(
+                    edges,
+                    new THREE.LineBasicMaterial({
+                        color: 0x111111
+                    })
+                );
+
+
+            object.add(line);
+        });
+
+
+        /* Размер модели */
+
+        const box =
+            new THREE.Box3()
+                .setFromObject(model);
+
+
+        const center =
+            box.getCenter(
+                new THREE.Vector3()
+            );
+
+
+        const size =
+            box.getSize(
+                new THREE.Vector3()
+            );
+
+
+        const maxSize =
+            Math.max(
+                size.x,
+                size.y,
+                size.z
+            );
+
+
+        /* Центрирование */
+
+        model.position.sub(center);
+
+
+        /* Камера */
+
+        camera.position.set(
+            maxSize * 1.5,
+            maxSize,
+            maxSize * 1.5
+        );
+
+
+        controls.target.set(
+            0,
+            0,
+            0
+        );
+
+
+        controls.update();
+    },
+
+
+    undefined,
+
+
+    function(error) {
+
+        console.error(
+            "Ошибка загрузки модели:",
+            error
+        );
+    }
+);
+
+
+/* --------------------------------------------------
+   ИЗМЕРЕНИЕ
+-------------------------------------------------- */
+
+const raycaster =
+    new THREE.Raycaster();
+
+
+const mouse =
+    new THREE.Vector2();
+
+
+let measureMode = false;
+
+let firstPoint = null;
+
+let measurementLine = null;
+
+let measurementPoints = [];
+
+
+/* Кнопки */
+
+const measureButton =
+    document.getElementById(
+        "measureButton"
+    );
+
+
+const clearButton =
+    document.getElementById(
+        "clearButton"
+    );
+
+
+const measurement =
+    document.getElementById(
+        "measurement"
+    );
+
+
+/* --------------------------------------------------
+   ВКЛЮЧЕНИЕ РЕЖИМА ИЗМЕРЕНИЯ
+-------------------------------------------------- */
+
+measureButton.addEventListener(
+    "click",
+    function() {
+
+        measureMode =
+            !measureMode;
+
+
+        if (measureMode) {
+
+            measureButton.textContent =
+                "📏 Выберите точку";
+
+            controls.enabled = false;
+
+        } else {
+
+            measureButton.textContent =
+                "📏 Измерить";
+
+            controls.enabled = true;
+
+            firstPoint = null;
+        }
+    }
+);
+
+
+/* --------------------------------------------------
+   ОЧИСТКА
+-------------------------------------------------- */
+
+clearButton.addEventListener(
+    "click",
+    function() {
+
+        if (measurementLine) {
+
+            scene.remove(
+                measurementLine
+            );
+
+            measurementLine.geometry.dispose();
+
+            measurementLine.material.dispose();
+
+            measurementLine = null;
+        }
+
+
+        measurementPoints = [];
+
+        firstPoint = null;
+
+        measurement.style.display =
+            "none";
+
+        measureMode = false;
+
+        controls.enabled = true;
+
+        measureButton.textContent =
+            "📏 Измерить";
+    }
+);
+
+
+/* --------------------------------------------------
+   КЛИК ПО МОДЕЛИ
+-------------------------------------------------- */
+
+renderer.domElement.addEventListener(
+    "pointerup",
+    function(event) {
+
+        if (!measureMode) {
+            return;
+        }
+
+
+        const rect =
+            renderer.domElement
+                .getBoundingClientRect();
+
+
+        mouse.x =
+            (
+                event.clientX -
+                rect.left
+            ) /
+            rect.width *
+            2 - 1;
+
+
+        mouse.y =
+            -(
+                event.clientY -
+                rect.top
+            ) /
+            rect.height *
+            2 + 1;
+
+
+        raycaster.setFromCamera(
+            mouse,
+            camera
+        );
+
+
+        const intersections =
+            raycaster.intersectObjects(
+                selectableMeshes,
+                false
+            );
+
+
+        if (
+            intersections.length === 0
+        ) {
+            return;
+        }
+
+
+        const point =
+            intersections[0].point.clone();
+
+
+        /* Первая точка */
+
+        if (!firstPoint) {
+
+            firstPoint =
+                point;
+
+            measurementPoints.push(
+                point
+            );
+
+            measureButton.textContent =
+                "📏 Выберите вторую точку";
+
+            return;
+        }
+
+
+        /* Вторая точка */
+
+        const secondPoint =
+            point;
+
+
+        measurementPoints.push(
+            secondPoint
+        );
+
+
+        drawMeasurement(
+            firstPoint,
+            secondPoint
+        );
+
+
+        firstPoint = null;
+
+        measureMode = false;
+
+        controls.enabled = true;
+
+        measureButton.textContent =
+            "📏 Измерить";
+    }
+);
+
+
+/* --------------------------------------------------
+   РИСУЕМ ИЗМЕРЕНИЕ
+-------------------------------------------------- */
+
+function drawMeasurement(
+    point1,
+    point2
+) {
+
+    /* Если старое измерение есть —
+       удаляем */
+
+    if (measurementLine) {
+
+        scene.remove(
+            measurementLine
+        );
+
+        measurementLine.geometry.dispose();
+
+        measurementLine.material.dispose();
+    }
+
+
+    const geometry =
+        new THREE.BufferGeometry()
+            .setFromPoints([
+                point1,
+                point2
+            ]);
+
+
+    const material =
+        new THREE.LineBasicMaterial({
+            color: 0xff0000,
+            linewidth: 3
+        });
+
+
+    measurementLine =
+        new THREE.Line(
+            geometry,
+            material
+        );
+
+
+    scene.add(
+        measurementLine
+    );
+
+
+    /* Расстояние */
+
+    const distance =
+        point1.distanceTo(
+            point2
+        );
+
+
+    measurement.textContent =
+        distance.toFixed(2) + " м";
+
+
+    measurement.style.display =
+        "block";
+}
+
+
+/* --------------------------------------------------
+   ПОЗИЦИЯ ТЕКСТА
+-------------------------------------------------- */
+
+function updateMeasurementLabel() {
+
+    if (
+        !measurementLine ||
+        measurement.style.display === "none"
+    ) {
+        return;
+    }
+
+
+    const positions =
+        measurementLine.geometry
+            .attributes.position;
+
+
+    const point1 =
+        new THREE.Vector3(
+            positions.getX(0),
+            positions.getY(0),
+            positions.getZ(0)
+        );
+
+
+    const point2 =
+        new THREE.Vector3(
+            positions.getX(1),
+            positions.getY(1),
+            positions.getZ(1)
+        );
+
+
+    const middle =
+        point1
+            .add(point2)
+            .multiplyScalar(0.5);
+
+
+    const projected =
+        middle.project(camera);
+
+
+    const x =
+        (projected.x * 0.5 + 0.5) *
+        window.innerWidth;
+
+
+    const y =
+        (-projected.y * 0.5 + 0.5) *
+        window.innerHeight;
+
+
+    measurement.style.left =
+        x + "px";
+
+
+    measurement.style.top =
+        y + "px";
+}
+
+
+/* --------------------------------------------------
+   РАЗМЕР ОКНА
+-------------------------------------------------- */
+
+window.addEventListener(
+    "resize",
+    function() {
+
+        camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
+
+
+        camera.updateProjectionMatrix();
+
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+    }
+);
+
+
+/* --------------------------------------------------
+   РЕНДЕР
+-------------------------------------------------- */
+
+function animate() {
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    controls.update();
+
+
+    updateMeasurementLabel();
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+}
+
+
+animate();
+
+</script>
+
+</body>
+</html>

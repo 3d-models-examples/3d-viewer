@@ -203,9 +203,14 @@ const selectableMeshes = [];
 const loader =
     new GLTFLoader();
 
-loader.load(
+const params = new URLSearchParams(window.location.search);
+const modelName = params.get("model");
 
-    "/3d-model/{{ model_name }}.glb",
+if (!modelName) {
+    alert("Не указано имя 3D-модели");
+} else {
+    loader.load(
+        modelName,
 
     function(gltf) {
 

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -13,6 +14,7 @@
             height: 100%;
             overflow: hidden;
             background: #dddddd;
+            font-family: Arial, sans-serif;
         }
 
         canvas {
@@ -21,34 +23,102 @@
             height: 100%;
         }
 
-        /* Панель */
+        /* Старая панель измерений скрыта */
 
         #toolbar {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            z-index: 10;
-
-            display: flex;
-            gap: 8px;
+            display: none;
         }
 
         button {
             border: 0;
             padding: 10px 14px;
-
             background: white;
             color: #222;
-
             border-radius: 6px;
-
             font-size: 14px;
             cursor: pointer;
-
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         button:hover {
+            background: #f0f0f0;
+        }
+
+        /* Инструкция управления */
+
+        #instructions {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 10;
+
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            padding: 10px 13px;
+
+            background: rgba(255,255,255,0.94);
+            border-radius: 8px;
+
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+
+            font-size: 12px;
+            color: #333;
+        }
+
+        #mouseDiagram {
+            width: 42px;
+            height: 58px;
+            flex-shrink: 0;
+        }
+
+        #instructionsText {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .instructionRow {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .instructionRow strong {
+            font-weight: 600;
+        }
+
+        .leftLabel {
+            color: #718e5d;
+        }
+
+        /* Кнопка копирования ссылки */
+
+        #copyViewButton {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+
+            padding: 12px 20px;
+
+            background: white;
+            color: #333;
+
+            border-radius: 7px;
+
+            font-size: 14px;
+            font-weight: 500;
+
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+
+            white-space: nowrap;
+        }
+
+        #copyViewButton:hover {
             background: #f0f0f0;
         }
 
@@ -57,7 +127,6 @@
         #measurement {
             position: fixed;
             z-index: 20;
-
             display: none;
 
             padding: 5px 8px;
@@ -74,8 +143,28 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.25);
 
             pointer-events: none;
-
             transform: translate(-50%, -50%);
+        }
+
+        @media (max-width: 500px) {
+            #instructions {
+                top: 10px;
+                right: 10px;
+                padding: 8px;
+                gap: 8px;
+                font-size: 11px;
+            }
+
+            #mouseDiagram {
+                width: 34px;
+                height: 48px;
+            }
+
+            #copyViewButton {
+                bottom: 12px;
+                font-size: 12px;
+                padding: 11px 14px;
+            }
         }
     </style>
 
@@ -91,10 +180,104 @@
 
 <body>
 
+<!-- Старая панель сохранена, но скрыта -->
+
 <div id="toolbar">
     <button id="measureButton">📏 Измерить</button>
     <button id="clearButton">Очистить</button>
 </div>
+
+<!-- Инструкция с изображением мыши -->
+
+<div id="instructions">
+
+    <svg id="mouseDiagram" viewBox="0 0 64 84"
+         xmlns="http://www.w3.org/2000/svg">
+
+        <defs>
+            <clipPath id="leftButtonClip">
+                <path d="M32 5
+                         C17 5 8 16 8 31
+                         L8 38
+                         L32 38 Z"/>
+            </clipPath>
+        </defs>
+
+        <!-- Выделенная левая кнопка -->
+
+        <path
+            d="M32 5
+               C17 5 8 16 8 31
+               L8 38
+               L32 38 Z"
+            fill="#a9b699"
+            clip-path="url(#leftButtonClip)"
+        />
+
+        <!-- Корпус мыши -->
+
+        <path
+            d="M32 5
+               C17 5 8 16 8 31
+               L8 57
+               C8 71 18 79 32 79
+               C46 79 56 71 56 57
+               L56 31
+               C56 16 47 5 32 5 Z"
+            fill="none"
+            stroke="#555"
+            stroke-width="2.5"
+        />
+
+        <!-- Разделение кнопок -->
+
+        <path
+            d="M32 5 L32 38"
+            stroke="#555"
+            stroke-width="2"
+        />
+
+        <!-- Колёсико -->
+
+        <rect
+            x="29"
+            y="15"
+            width="6"
+            height="13"
+            rx="3"
+            fill="#555"
+        />
+
+    </svg>
+
+    <div id="instructionsText">
+
+        <div class="instructionRow">
+            <strong class="leftLabel">ЛКМ</strong>
+            <span>— вращать</span>
+        </div>
+
+        <div class="instructionRow">
+            <strong>ПКМ</strong>
+            <span>— перемещать</span>
+        </div>
+
+        <div class="instructionRow">
+            <strong>Колёсико</strong>
+            <span>— масштабировать</span>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- Кнопка копирования ракурса -->
+
+<button id="copyViewButton">
+    Скопировать ссылку с текущим ракурсом
+</button>
+
 
 <div id="measurement"></div>
 
@@ -197,138 +380,319 @@ const selectableMeshes = [];
 
 
 /* --------------------------------------------------
+   ПАРАМЕТРЫ URL
+-------------------------------------------------- */
+
+const params =
+    new URLSearchParams(
+        window.location.search
+    );
+
+const modelName =
+    params.get("model");
+
+
+/* Чтение координат из URL */
+
+function readVectorParam(value) {
+
+    if (!value) {
+        return null;
+    }
+
+    const numbers =
+        value.split(",").map(Number);
+
+    if (
+        numbers.length !== 3 ||
+        !numbers.every(Number.isFinite)
+    ) {
+        return null;
+    }
+
+    return new THREE.Vector3(
+        numbers[0],
+        numbers[1],
+        numbers[2]
+    );
+}
+
+
+/* Сохранённые координаты камеры */
+
+const savedCamera =
+    readVectorParam(
+        params.get("camera")
+    );
+
+const savedTarget =
+    readVectorParam(
+        params.get("target")
+    );
+
+
+/* --------------------------------------------------
    ЗАГРУЗКА GLB
 -------------------------------------------------- */
 
 const loader =
     new GLTFLoader();
 
-const params = new URLSearchParams(window.location.search);
-const modelName = params.get("model");
-
 if (!modelName) {
+
     alert("Не указано имя 3D-модели");
+
 } else {
+
     loader.load(
         modelName,
 
-    function(gltf) {
+        function(gltf) {
 
-        model = gltf.scene;
+            model = gltf.scene;
 
-        scene.add(model);
+            scene.add(model);
 
 
-        /* Контуры */
+            /* Контуры */
 
-        model.traverse(function(object) {
+            model.traverse(function(object) {
 
-            if (!object.isMesh) {
-                return;
+                if (!object.isMesh) {
+                    return;
+                }
+
+                selectableMeshes.push(object);
+
+                const edges =
+                    new THREE.EdgesGeometry(
+                        object.geometry,
+                        30
+                    );
+
+                const line =
+                    new THREE.LineSegments(
+                        edges,
+                        new THREE.LineBasicMaterial({
+                            color: 0x111111
+                        })
+                    );
+
+                object.add(line);
+            });
+
+
+            /* Размер модели */
+
+            const box =
+                new THREE.Box3()
+                    .setFromObject(model);
+
+            const center =
+                box.getCenter(
+                    new THREE.Vector3()
+                );
+
+            const size =
+                box.getSize(
+                    new THREE.Vector3()
+                );
+
+            const maxSize =
+                Math.max(
+                    size.x,
+                    size.y,
+                    size.z
+                );
+
+
+            /* Центрирование */
+
+            model.position.sub(center);
+
+
+            /* Начальное положение камеры */
+
+            camera.position.set(
+                maxSize * 1.5,
+                maxSize,
+                maxSize * 1.5
+            );
+
+            controls.target.set(
+                0,
+                0,
+                0
+            );
+
+
+            /* Восстановление ракурса из URL */
+
+            if (savedCamera && savedTarget) {
+
+                camera.position.copy(
+                    savedCamera
+                );
+
+                controls.target.copy(
+                    savedTarget
+                );
+            }
+
+            controls.update();
+
+        },
+
+
+        undefined,
+
+
+        function(error) {
+
+            console.error(
+                "Ошибка загрузки модели:",
+                error
+            );
+        }
+    );
+}
+
+
+/* --------------------------------------------------
+   КОПИРОВАНИЕ ССЫЛКИ С ТЕКУЩИМ РАКУРСОМ
+-------------------------------------------------- */
+
+const copyViewButton =
+    document.getElementById(
+        "copyViewButton"
+    );
+
+
+copyViewButton.addEventListener(
+    "click",
+    async function() {
+
+        /* Обновляем положение камеры */
+
+        controls.update();
+
+
+        /* Берём текущие координаты */
+
+        const cameraPosition =
+            camera.position;
+
+        const targetPosition =
+            controls.target;
+
+
+        /* Формируем ссылку */
+
+        const url =
+            new URL(window.location.href);
+
+
+        url.searchParams.set(
+            "camera",
+            [
+                cameraPosition.x,
+                cameraPosition.y,
+                cameraPosition.z
+            ].map(v => v.toFixed(6)).join(",")
+        );
+
+
+        url.searchParams.set(
+            "target",
+            [
+                targetPosition.x,
+                targetPosition.y,
+                targetPosition.z
+            ].map(v => v.toFixed(6)).join(",")
+        );
+
+
+        /* Копирование */
+
+        try {
+
+            if (
+                navigator.clipboard &&
+                window.isSecureContext
+            ) {
+
+                await navigator.clipboard.writeText(
+                    url.toString()
+                );
+
+            } else {
+
+                const textarea =
+                    document.createElement("textarea");
+
+                textarea.value = url.toString();
+
+                textarea.style.position = "fixed";
+                textarea.style.opacity = "0";
+
+                document.body.appendChild(textarea);
+
+                textarea.select();
+
+                const success =
+                    document.execCommand("copy");
+
+                textarea.remove();
+
+                if (!success) {
+                    throw new Error("Не удалось скопировать ссылку");
+                }
             }
 
 
-            selectableMeshes.push(object);
+            copyViewButton.textContent =
+                "✓ Ссылка скопирована";
+
+            setTimeout(function() {
+
+                copyViewButton.textContent =
+                    "Скопировать ссылку с текущим ракурсом";
+
+            }, 2500);
 
 
-            const edges =
-                new THREE.EdgesGeometry(
-                    object.geometry,
-                    30
-                );
+        } catch(error) {
 
-
-            const line =
-                new THREE.LineSegments(
-                    edges,
-                    new THREE.LineBasicMaterial({
-                        color: 0x111111
-                    })
-                );
-
-
-            object.add(line);
-        });
-
-
-        /* Размер модели */
-
-        const box =
-            new THREE.Box3()
-                .setFromObject(model);
-
-
-        const center =
-            box.getCenter(
-                new THREE.Vector3()
+            console.error(
+                "Ошибка копирования:",
+                error
             );
 
+            copyViewButton.textContent =
+                "Ошибка копирования";
 
-        const size =
-            box.getSize(
-                new THREE.Vector3()
-            );
+            setTimeout(function() {
 
+                copyViewButton.textContent =
+                    "Скопировать ссылку с текущим ракурсом";
 
-        const maxSize =
-            Math.max(
-                size.x,
-                size.y,
-                size.z
-            );
+            }, 2500);
+        }
 
-
-        /* Центрирование */
-
-        model.position.sub(center);
-
-
-        /* Камера */
-
-        camera.position.set(
-            maxSize * 1.5,
-            maxSize,
-            maxSize * 1.5
-        );
-
-
-        controls.target.set(
-            0,
-            0,
-            0
-        );
-
-
-        controls.update();
-    },
-
-
-    undefined,
-
-
-    function(error) {
-
-        console.error(
-            "Ошибка загрузки модели:",
-            error
-        );
     }
 );
-}
-    
 
 
 /* --------------------------------------------------
    ИЗМЕРЕНИЕ
+   Функциональность сохранена
 -------------------------------------------------- */
 
 const raycaster =
     new THREE.Raycaster();
 
-
 const mouse =
     new THREE.Vector2();
-
 
 let measureMode = false;
 
@@ -346,12 +710,10 @@ const measureButton =
         "measureButton"
     );
 
-
 const clearButton =
     document.getElementById(
         "clearButton"
     );
-
 
 const measurement =
     document.getElementById(
@@ -369,7 +731,6 @@ measureButton.addEventListener(
 
         measureMode =
             !measureMode;
-
 
         if (measureMode) {
 
@@ -412,7 +773,6 @@ clearButton.addEventListener(
             measurementLine = null;
         }
 
-
         measurementPoints = [];
 
         firstPoint = null;
@@ -442,11 +802,9 @@ renderer.domElement.addEventListener(
             return;
         }
 
-
         const rect =
             renderer.domElement
                 .getBoundingClientRect();
-
 
         mouse.x =
             (
@@ -456,7 +814,6 @@ renderer.domElement.addEventListener(
             rect.width *
             2 - 1;
 
-
         mouse.y =
             -(
                 event.clientY -
@@ -465,12 +822,10 @@ renderer.domElement.addEventListener(
             rect.height *
             2 + 1;
 
-
         raycaster.setFromCamera(
             mouse,
             camera
         );
-
 
         const intersections =
             raycaster.intersectObjects(
@@ -478,13 +833,11 @@ renderer.domElement.addEventListener(
                 false
             );
 
-
         if (
             intersections.length === 0
         ) {
             return;
         }
-
 
         const point =
             intersections[0].point.clone();
@@ -513,17 +866,14 @@ renderer.domElement.addEventListener(
         const secondPoint =
             point;
 
-
         measurementPoints.push(
             secondPoint
         );
-
 
         drawMeasurement(
             firstPoint,
             secondPoint
         );
-
 
         firstPoint = null;
 
@@ -546,9 +896,6 @@ function drawMeasurement(
     point2
 ) {
 
-    /* Если старое измерение есть —
-       удаляем */
-
     if (measurementLine) {
 
         scene.remove(
@@ -560,7 +907,6 @@ function drawMeasurement(
         measurementLine.material.dispose();
     }
 
-
     const geometry =
         new THREE.BufferGeometry()
             .setFromPoints([
@@ -568,20 +914,17 @@ function drawMeasurement(
                 point2
             ]);
 
-
     const material =
         new THREE.LineBasicMaterial({
             color: 0xff0000,
             linewidth: 3
         });
 
-
     measurementLine =
         new THREE.Line(
             geometry,
             material
         );
-
 
     scene.add(
         measurementLine
@@ -595,10 +938,8 @@ function drawMeasurement(
             point2
         );
 
-
     measurement.textContent =
         distance.toFixed(2) + " м";
-
 
     measurement.style.display =
         "block";
@@ -618,11 +959,9 @@ function updateMeasurementLabel() {
         return;
     }
 
-
     const positions =
         measurementLine.geometry
             .attributes.position;
-
 
     const point1 =
         new THREE.Vector3(
@@ -631,7 +970,6 @@ function updateMeasurementLabel() {
             positions.getZ(0)
         );
 
-
     const point2 =
         new THREE.Vector3(
             positions.getX(1),
@@ -639,30 +977,24 @@ function updateMeasurementLabel() {
             positions.getZ(1)
         );
 
-
     const middle =
         point1
             .add(point2)
             .multiplyScalar(0.5);
 
-
     const projected =
         middle.project(camera);
-
 
     const x =
         (projected.x * 0.5 + 0.5) *
         window.innerWidth;
 
-
     const y =
         (-projected.y * 0.5 + 0.5) *
         window.innerHeight;
 
-
     measurement.style.left =
         x + "px";
-
 
     measurement.style.top =
         y + "px";
@@ -681,9 +1013,7 @@ window.addEventListener(
             window.innerWidth /
             window.innerHeight;
 
-
         camera.updateProjectionMatrix();
-
 
         renderer.setSize(
             window.innerWidth,
@@ -703,19 +1033,15 @@ function animate() {
         animate
     );
 
-
     controls.update();
 
-
     updateMeasurementLabel();
-
 
     renderer.render(
         scene,
         camera
     );
 }
-
 
 animate();
 

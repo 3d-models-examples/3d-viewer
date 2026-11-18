@@ -1031,6 +1031,38 @@ edgeLines.push(line);
                     size.z
                 );
 
+            modelMaxSize = maxSize;
+
+groundY = -size.y / 2;
+
+const groundGeometry =
+    new THREE.PlaneGeometry(
+        maxSize * 10,
+        maxSize * 10
+    );
+
+const groundMaterial =
+    new THREE.ShadowMaterial({
+        opacity: 0.25
+    });
+
+groundPlane =
+    new THREE.Mesh(
+        groundGeometry,
+        groundMaterial
+    );
+
+groundPlane.rotation.x =
+    -Math.PI / 2;
+
+groundPlane.position.y =
+    groundY - 0.01;
+
+groundPlane.receiveShadow = true;
+
+groundPlane.visible = false;
+
+scene.add(groundPlane);
 
             /* Центрирование */
 

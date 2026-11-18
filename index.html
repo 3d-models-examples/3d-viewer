@@ -522,13 +522,35 @@ renderer.toneMappingExposure = 1;
    СВЕТ
 -------------------------------------------------- */
 
-scene.add(
+const hemisphereLight =
     new THREE.HemisphereLight(
         0xffffff,
         0x555555,
         2
-    )
-);
+    );
+
+scene.add(hemisphereLight);
+
+const directionalLight =
+    new THREE.DirectionalLight(
+        0xffffff,
+        2
+    );
+
+directionalLight.castShadow = true;
+
+directionalLight.shadow.mapSize.width = 2048;
+directionalLight.shadow.mapSize.height = 2048;
+
+directionalLight.shadow.camera.near = 0.1;
+directionalLight.shadow.camera.far = 1000;
+
+directionalLight.shadow.bias = -0.0001;
+
+scene.add(directionalLight);
+scene.add(directionalLight.target);
+
+directionalLight.visible = false;
 
 
 /* --------------------------------------------------

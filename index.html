@@ -344,7 +344,98 @@
 
 </div>
 
+<!-- Переключение режимов -->
 
+<div id="viewMode">
+    <button id="contourMode" class="active">
+        Контуры
+    </button>
+
+    <button id="photoMode">
+        Фотореалистичный вид
+    </button>
+</div>
+
+<!-- Настройки фотореалистичного режима -->
+
+<div id="photoSettings">
+
+    <div class="photoSetting">
+        <label>
+            <span>Фон</span>
+        </label>
+
+        <select id="photoBackground">
+            <option value="#dddddd">Серый</option>
+            <option value="#f0eee8">Светлый</option>
+            <option value="#333333">Тёмный</option>
+        </select>
+    </div>
+
+    <div class="photoSetting">
+        <label>
+            <span>Яркость освещения</span>
+            <span id="brightnessValue">1.0</span>
+        </label>
+
+        <input
+            type="range"
+            id="brightness"
+            min="0.3"
+            max="2"
+            step="0.1"
+            value="1"
+        >
+    </div>
+
+    <div class="photoSetting">
+        <label>
+            <span>Направление света</span>
+            <span id="lightAngleValue">45°</span>
+        </label>
+
+        <input
+            type="range"
+            id="lightAngle"
+            min="0"
+            max="360"
+            step="5"
+            value="45"
+        >
+    </div>
+
+    <div class="photoSetting">
+        <label>
+            <span>Высота света</span>
+            <span id="lightHeightValue">55°</span>
+        </label>
+
+        <input
+            type="range"
+            id="lightHeight"
+            min="10"
+            max="90"
+            step="5"
+            value="55"
+        >
+    </div>
+
+    <div class="photoSetting">
+        <label>
+            <span>HDRI-окружение</span>
+            <input type="checkbox" id="environmentToggle" checked>
+        </label>
+    </div>
+
+    <div class="photoSetting">
+        <label>
+            <span>Тени</span>
+            <input type="checkbox" id="shadowsToggle" checked>
+        </label>
+    </div>
+
+</div>
+    
 <!-- Кнопка копирования ракурса -->
 
 <button id="copyViewButton">

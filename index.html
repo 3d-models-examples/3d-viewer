@@ -876,6 +876,15 @@ photoModeButton.addEventListener(
     }
 );
 
+photoSettingsToggle.addEventListener("click", function() {
+    photoSettingsExpanded = !photoSettingsExpanded;
+
+    photoSettings.style.display =
+        photoSettingsExpanded ? "block" : "none";
+
+    photoSettingsToggle.textContent =
+        photoSettingsExpanded ? "▲" : "▼";
+});    
 
 /* События настроек */
 

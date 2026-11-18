@@ -510,6 +510,13 @@ renderer.setSize(
     window.innerHeight
 );
 
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+renderer.shadowMap.enabled = false;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+renderer.toneMapping = THREE.NoToneMapping;
+renderer.toneMappingExposure = 1;
 
 /* --------------------------------------------------
    СВЕТ

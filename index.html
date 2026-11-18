@@ -375,7 +375,7 @@
     <div class="photoSetting">
         <label>
             <span>Яркость освещения</span>
-            <span id="brightnessValue">0.8</span>
+            <span id="brightnessValue">0.7</span>
         </label>
 
         <input
@@ -384,7 +384,7 @@
             min="0.2"
             max="1.5"
             step="0.05"
-            value="0.8"
+            value="0.7"
         >
     </div>
 
@@ -423,7 +423,7 @@
     <div class="photoSetting">
         <label>
             <span>HDRI-окружение</span>
-            <input type="checkbox" id="environmentToggle" checked>
+            <input type="checkbox" id="environmentToggle">
         </label>
     </div>
 
@@ -512,7 +512,7 @@ renderer.setSize(
 
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-renderer.shadowMap.enabled = false;
+renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.shadowMap.autoUpdate = true;
 
@@ -526,8 +526,8 @@ renderer.toneMappingExposure = 1;
 const hemisphereLight =
     new THREE.HemisphereLight(
         0xffffff,
-        0x444444,
-        0.45
+        0x333333,
+        0.22
     );
 
 scene.add(hemisphereLight);
@@ -535,7 +535,7 @@ scene.add(hemisphereLight);
 const directionalLight =
     new THREE.DirectionalLight(
         0xffffff,
-        2.5
+        3.2
     );
 
 directionalLight.castShadow = true;
@@ -547,7 +547,7 @@ directionalLight.shadow.camera.near = 0.1;
 directionalLight.shadow.camera.far = 1000;
 
 directionalLight.shadow.bias = -0.0001;
-directionalLight.shadow.normalBias = 0.02;
+directionalLight.shadow.normalBias = 0.01;
 directionalLight.shadow.radius = 4;
 
 scene.add(directionalLight);
@@ -673,7 +673,7 @@ function updateEnvironment() {
     if (useEnvironment) {
         scene.environment = hdrTexture;
         scene.environmentIntensity =
-            0.25 * Number(brightness.value);
+            0.12 * Number(brightness.value);
     } else {
         scene.environment = null;
         scene.environmentIntensity = 0;
@@ -723,18 +723,18 @@ function updateBrightness() {
         value.toFixed(1);
 
     hemisphereLight.intensity =
-        0.45 * value;
+        0.22 * value;
 
     directionalLight.intensity =
-        2.5 * value;
+        3.2 * value;
 
     if (scene.environment) {
         scene.environmentIntensity =
-            0.25 * value;
+            0.12 * value;
     }
 
     renderer.toneMappingExposure =
-        0.9 * value;
+        0.8 * value;
 }
 
 
@@ -746,15 +746,17 @@ function updateShadows() {
         photoModeEnabled &&
         shadowsToggle.checked;
 
-    renderer.shadowMap.enabled = shadowsEnabled;
+    /* Shadow pipeline stays enabled; the checkbox controls the light and receiver. */
+    renderer.shadowMap.enabled = true;
     renderer.shadowMap.autoUpdate = true;
-    directionalLight.castShadow = true;
+
+    directionalLight.visible = photoModeEnabled;
+    directionalLight.castShadow = shadowsEnabled;
+    directionalLight.shadow.needsUpdate = true;
 
     if (groundPlane) {
         groundPlane.visible = shadowsEnabled;
     }
-
-    directionalLight.shadow.needsUpdate = true;
 }
 
 
@@ -817,7 +819,7 @@ function setViewMode(photo) {
     /* Освещение */
 
     hemisphereLight.intensity =
-        photo ? 0.45 : 2;
+        photo ? 0.22 : 2;
 
     directionalLight.visible =
         photo;
@@ -1055,7 +1057,7 @@ const groundGeometry =
 
 const groundMaterial =
     new THREE.ShadowMaterial({
-        opacity: 0.5
+        opacity: 0.65
     });
 
 groundPlane =
@@ -1103,14 +1105,26 @@ directionalLight.shadow.camera.top =
     maxSize * 1.8;
 
 directionalLight.shadow.camera.bottom =
-    -maxSize * 1.8;
+    -maxSize * 2.5;
+
+directionalLight.shadow.camera.near =
+    0.01;
 
 directionalLight.shadow.camera.far =
-    maxSize * 10;
+    maxSize * 12;
+
+directionalLight.shadow.bias =
+    -0.00005;
+
+directionalLight.shadow.normalBias =
+    0.01;
 
 directionalLight.shadow.camera.updateProjectionMatrix();
+directionalLight.shadow.needsUpdate = true;
 
-updateLightPosition();            
+updateLightPosition();
+model.updateMatrixWorld(true);
+directionalLight.updateMatrixWorld(true);
 
             /* Начальное положение камеры */
 

@@ -994,15 +994,17 @@ if (!modelName) {
                         30
                     );
 
-                const line =
-                    new THREE.LineSegments(
-                        edges,
-                        new THREE.LineBasicMaterial({
-                            color: 0x111111
-                        })
-                    );
+const line =
+    new THREE.LineSegments(
+        edges,
+        new THREE.LineBasicMaterial({
+            color: 0x111111
+        })
+    );
 
-                object.add(line);
+object.add(line);
+
+edgeLines.push(line);
             });
 
 

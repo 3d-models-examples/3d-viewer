@@ -565,6 +565,334 @@ const controls =
 
 controls.enableDamping = true;
 
+/* --------------------------------------------------
+   РЕЖИМЫ ОТОБРАЖЕНИЯ
+-------------------------------------------------- */
+
+const contourModeButton =
+    document.getElementById("contourMode");
+
+const photoModeButton =
+    document.getElementById("photoMode");
+
+const photoSettings =
+    document.getElementById("photoSettings");
+
+const photoBackground =
+    document.getElementById("photoBackground");
+
+const brightness =
+    document.getElementById("brightness");
+
+const brightnessValue =
+    document.getElementById("brightnessValue");
+
+const lightAngle =
+    document.getElementById("lightAngle");
+
+const lightAngleValue =
+    document.getElementById("lightAngleValue");
+
+const lightHeight =
+    document.getElementById("lightHeight");
+
+const lightHeightValue =
+    document.getElementById("lightHeightValue");
+
+const environmentToggle =
+    document.getElementById("environmentToggle");
+
+const shadowsToggle =
+    document.getElementById("shadowsToggle");
+
+let photoModeEnabled = false;
+
+let edgeLines = [];
+
+let groundPlane = null;
+
+let modelMaxSize = 1;
+
+let groundY = -0.5;
+
+let hdrTexture = null;
+
+let hdrLoaded = false;
+
+const originalBackground = 0xdddddd;
+
+
+/* Загрузка HDRI */
+
+function loadHDRI() {
+
+    if (hdrLoaded) {
+        return;
+    }
+
+    new RGBELoader().load(
+        "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr",
+
+        function(texture) {
+
+            texture.mapping =
+                THREE.EquirectangularReflectionMapping;
+
+            hdrTexture = texture;
+
+            hdrLoaded = true;
+
+            updateEnvironment();
+        },
+
+        undefined,
+
+        function(error) {
+
+            console.error(
+                "Ошибка загрузки HDRI:",
+                error
+            );
+        }
+    );
+}
+
+
+/* Окружение */
+
+function updateEnvironment() {
+
+    if (
+        photoModeEnabled &&
+        environmentToggle.checked &&
+        hdrTexture
+    ) {
+
+        scene.environment = hdrTexture;
+
+    } else {
+
+        scene.environment = null;
+    }
+}
+
+
+/* Направление света */
+
+function updateLightPosition() {
+
+    const angle =
+        Number(lightAngle.value) *
+        Math.PI / 180;
+
+    const height =
+        Number(lightHeight.value) *
+        Math.PI / 180;
+
+    const distance =
+        modelMaxSize * 2.5;
+
+    directionalLight.position.set(
+        Math.cos(height) * Math.cos(angle) * distance,
+        Math.sin(height) * distance,
+        Math.cos(height) * Math.sin(angle) * distance
+    );
+
+    directionalLight.target.position.set(
+        0,
+        groundY,
+        0
+    );
+
+    directionalLight.target.updateMatrixWorld();
+}
+
+
+/* Яркость */
+
+function updateBrightness() {
+
+    const value =
+        Number(brightness.value);
+
+    brightnessValue.textContent =
+        value.toFixed(1);
+
+    hemisphereLight.intensity =
+        1.2 * value;
+
+    directionalLight.intensity =
+        2 * value;
+
+    renderer.toneMappingExposure =
+        value;
+}
+
+
+/* Тени */
+
+function updateShadows() {
+
+    renderer.shadowMap.enabled =
+        photoModeEnabled &&
+        shadowsToggle.checked;
+
+    if (groundPlane) {
+
+        groundPlane.visible =
+            photoModeEnabled &&
+            shadowsToggle.checked;
+    }
+}
+
+
+/* Фон */
+
+function updateBackground() {
+
+    if (photoModeEnabled) {
+
+        scene.background =
+            new THREE.Color(
+                photoBackground.value
+            );
+
+    } else {
+
+        scene.background =
+            new THREE.Color(
+                originalBackground
+            );
+    }
+}
+
+
+/* Переключение режимов */
+
+function setViewMode(photo) {
+
+    photoModeEnabled = photo;
+
+    contourModeButton.classList.toggle(
+        "active",
+        !photo
+    );
+
+    photoModeButton.classList.toggle(
+        "active",
+        photo
+    );
+
+    photoSettings.style.display =
+        photo ? "block" : "none";
+
+    /* Контуры */
+
+    edgeLines.forEach(function(line) {
+
+        line.visible = !photo;
+    });
+
+    /* Настройки Renderer */
+
+    renderer.toneMapping =
+        photo
+            ? THREE.ACESFilmicToneMapping
+            : THREE.NoToneMapping;
+
+    renderer.toneMappingExposure = 1;
+
+    /* Освещение */
+
+    hemisphereLight.intensity =
+        photo ? 1.2 : 2;
+
+    directionalLight.visible =
+        photo;
+
+    /* Фон и окружение */
+
+    updateBackground();
+
+    updateEnvironment();
+
+    /* Тени */
+
+    updateShadows();
+
+    if (photo) {
+
+        loadHDRI();
+
+        updateBrightness();
+
+        updateLightPosition();
+    }
+}
+
+
+/* События переключения */
+
+contourModeButton.addEventListener(
+    "click",
+    function() {
+
+        setViewMode(false);
+    }
+);
+
+photoModeButton.addEventListener(
+    "click",
+    function() {
+
+        setViewMode(true);
+    }
+);
+
+
+/* События настроек */
+
+brightness.addEventListener(
+    "input",
+    updateBrightness
+);
+
+lightAngle.addEventListener(
+    "input",
+    function() {
+
+        lightAngleValue.textContent =
+            lightAngle.value + "°";
+
+        updateLightPosition();
+    }
+);
+
+lightHeight.addEventListener(
+    "input",
+    function() {
+
+        lightHeightValue.textContent =
+            lightHeight.value + "°";
+
+        updateLightPosition();
+    }
+);
+
+photoBackground.addEventListener(
+    "change",
+    updateBackground
+);
+
+environmentToggle.addEventListener(
+    "change",
+    updateEnvironment
+);
+
+shadowsToggle.addEventListener(
+    "change",
+    updateShadows
+);    
 
 /* --------------------------------------------------
    МОДЕЛЬ

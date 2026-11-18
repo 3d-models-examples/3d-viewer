@@ -150,7 +150,7 @@
 
 #photoSettings {
     position: fixed;
-    top: 60px;
+    top: 96px;
     left: 15px;
     z-index: 10;
     width: 230px;
@@ -185,6 +185,21 @@
     width: 100%;
     padding: 5px;
 }
+#photoSettingsToggle {
+    display: none;
+    position: fixed;
+    top: 60px;
+    left: 15px;
+    z-index: 11;
+    width: 36px;
+    height: 28px;
+    padding: 0;
+    font-size: 14px;
+    background: white;
+    color: #333;
+    border-radius: 6px;
+    cursor: pointer;
+}        
 
         /* Значение измерения */
 
@@ -355,6 +370,7 @@
         Фотореалистичный вид
     </button>
 </div>
+    <button id="photoSettingsToggle">▼</button>
 
 <!-- Настройки фотореалистичного режима -->
 

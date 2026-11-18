@@ -804,8 +804,14 @@ function setViewMode(photo) {
         photo
     );
 
-    photoSettings.style.display =
-        photo ? "block" : "none";
+photoSettingsExpanded = false;
+
+photoSettings.style.display = "none";
+
+photoSettingsToggle.style.display =
+    photo ? "block" : "none";
+
+photoSettingsToggle.textContent = "▼";
 
     /* Контуры */
 

@@ -375,16 +375,16 @@
     <div class="photoSetting">
         <label>
             <span>Яркость освещения</span>
-            <span id="brightnessValue">0.6</span>
+            <span id="brightnessValue">1.0</span>
         </label>
 
         <input
             type="range"
             id="brightness"
-            min="0.2"
-            max="1.5"
-            step="0.05"
-            value="0.7"
+            min="0.3"
+            max="2"
+            step="0.1"
+            value="1"
         >
     </div>
 
@@ -423,7 +423,7 @@
     <div class="photoSetting">
         <label>
             <span>HDRI-окружение</span>
-            <input type="checkbox" id="environmentToggle">
+            <input type="checkbox" id="environmentToggle" checked>
         </label>
     </div>
 
@@ -512,9 +512,8 @@ renderer.setSize(
 
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = false;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.shadowMap.autoUpdate = true;
 
 renderer.toneMapping = THREE.NoToneMapping;
 renderer.toneMappingExposure = 1;
@@ -526,8 +525,8 @@ renderer.toneMappingExposure = 1;
 const hemisphereLight =
     new THREE.HemisphereLight(
         0xffffff,
-        0x333333,
-        0.22
+        0x555555,
+        2
     );
 
 scene.add(hemisphereLight);
@@ -535,7 +534,7 @@ scene.add(hemisphereLight);
 const directionalLight =
     new THREE.DirectionalLight(
         0xffffff,
-        3.2
+        2
     );
 
 directionalLight.castShadow = true;
@@ -547,8 +546,6 @@ directionalLight.shadow.camera.near = 0.1;
 directionalLight.shadow.camera.far = 1000;
 
 directionalLight.shadow.bias = -0.0001;
-directionalLight.shadow.normalBias = 0.01;
-directionalLight.shadow.radius = 4;
 
 scene.add(directionalLight);
 scene.add(directionalLight.target);
@@ -665,18 +662,17 @@ function loadHDRI() {
 
 function updateEnvironment() {
 
-    const useEnvironment =
+    if (
         photoModeEnabled &&
         environmentToggle.checked &&
-        hdrTexture;
+        hdrTexture
+    ) {
 
-    if (useEnvironment) {
         scene.environment = hdrTexture;
-        scene.environmentIntensity =
-            0.12 * Number(brightness.value);
+
     } else {
+
         scene.environment = null;
-        scene.environmentIntensity = 0;
     }
 }
 
@@ -723,18 +719,13 @@ function updateBrightness() {
         value.toFixed(1);
 
     hemisphereLight.intensity =
-        0.22 * value;
+        1.2 * value;
 
     directionalLight.intensity =
-        3.2 * value;
-
-    if (scene.environment) {
-        scene.environmentIntensity =
-            0.12 * value;
-    }
+        2 * value;
 
     renderer.toneMappingExposure =
-        0.8 * value;
+        value;
 }
 
 
@@ -742,20 +733,15 @@ function updateBrightness() {
 
 function updateShadows() {
 
-    const shadowsEnabled =
+    renderer.shadowMap.enabled =
         photoModeEnabled &&
         shadowsToggle.checked;
 
-    /* Shadow pipeline stays enabled; the checkbox controls the light and receiver. */
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.autoUpdate = true;
-
-    directionalLight.visible = photoModeEnabled;
-    directionalLight.castShadow = shadowsEnabled;
-    directionalLight.shadow.needsUpdate = true;
-
     if (groundPlane) {
-        groundPlane.visible = shadowsEnabled;
+
+        groundPlane.visible =
+            photoModeEnabled &&
+            shadowsToggle.checked;
     }
 }
 
@@ -819,7 +805,7 @@ function setViewMode(photo) {
     /* Освещение */
 
     hemisphereLight.intensity =
-        photo ? 0.22 : 2;
+        photo ? 1.2 : 2;
 
     directionalLight.visible =
         photo;
@@ -1057,7 +1043,7 @@ const groundGeometry =
 
 const groundMaterial =
     new THREE.ShadowMaterial({
-        opacity: 0.65
+        opacity: 0.25
     });
 
 groundPlane =
@@ -1078,10 +1064,6 @@ groundPlane.visible = false;
 
 scene.add(groundPlane);
 
-/* Применяем состояние теней, даже если фоторежим включили
-   до завершения загрузки модели */
-updateShadows();
-
             /* Центрирование */
 
             model.position.sub(center);
@@ -1096,35 +1078,20 @@ model.traverse(function(object) {
 });
 
 directionalLight.shadow.camera.left =
-    -maxSize * 1.8;
+    -maxSize * 3;
 
 directionalLight.shadow.camera.right =
-    maxSize * 1.8;
+    maxSize * 3;
 
 directionalLight.shadow.camera.top =
-    maxSize * 1.8;
+    maxSize * 3;
 
 directionalLight.shadow.camera.bottom =
-    -maxSize * 2.5;
-
-directionalLight.shadow.camera.near =
-    0.01;
-
-directionalLight.shadow.camera.far =
-    maxSize * 12;
-
-directionalLight.shadow.bias =
-    -0.00005;
-
-directionalLight.shadow.normalBias =
-    0.01;
+    -maxSize * 3;
 
 directionalLight.shadow.camera.updateProjectionMatrix();
-directionalLight.shadow.needsUpdate = true;
 
-updateLightPosition();
-model.updateMatrixWorld(true);
-directionalLight.updateMatrixWorld(true);
+updateLightPosition();            
 
             /* Начальное положение камеры */
 
